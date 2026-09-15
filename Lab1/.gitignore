@@ -1,1 +1,3 @@
 test_sorting.py
+__pycache__/
+*.pyc
