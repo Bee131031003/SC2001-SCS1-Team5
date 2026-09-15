@@ -47,10 +47,10 @@ def merge(arr,temp, left, mid, right):
         arr[k] = temp[i]
         i+=1
         k+=1
-    while j<=mid:
+    while j <= right:
         arr[k] = temp[j]
         j+=1
-        K+=1
+        k += 1
 
     return comparisons  
 
@@ -99,6 +99,8 @@ def _hybrid_merge_sort(arr, temp, left, right, S):
     comparisons += _hybrid_merge_sort(arr, temp, left, mid, S)
 
     comparisons += _hybrid_merge_sort(arr, temp, mid+1, right, S)
+
+    comparisons += merge(arr, temp, left, mid, right)
 
     return comparisons
 
