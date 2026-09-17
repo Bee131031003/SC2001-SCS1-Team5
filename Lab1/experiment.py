@@ -42,7 +42,7 @@ def experiment_fixed_s_varying_n():
 
 # experiment 2：fix n=100,000，fix best S
 def experiment_fixed_n_varying_s():
-    fixed_n = 100000
+    fixed_n = 100_000
     s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
     recorded_rows = []
 
@@ -64,6 +64,30 @@ def experiment_fixed_n_varying_s():
     save_data_to_csv("fixed_n_varying_s.csv", ["n", "S", "comparisons", "time_seconds"], recorded_rows)
     print("experiment 2 result saved to fixed_n_varying_s.csv\n")
 
+def experiment_optimal_s():
+    n_values = [1_000, 10_000, 100_000, 1_000_000, 10_000_000]
+
+    s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
+
+    recorded_rows = []
+
+    for current_n in n_values:
+        base_data = generate_random_array(current_n, MAX_VALUE)
+
+        for current_s in s_candidates:
+            test_data = base_data.copy()
+
+            start = time.process_time()
+
+            comparisons = hybrid_merge_sort(test_data, current_s)
+
+            end = time.process_time()
+
+            cpu_time = end - start
+
+            recorded_rows.append([current_n, current_s, comparisons, cpu_time])
+
+    save_data_to_csv("optimal_s.csv", ["n", "S", "comparisons", "cpu_time"], recorded_rows)
 
 # experiment 3: task d, n = 10000000
 def experiment_task_d_10_million(best_s=32):
