@@ -27,7 +27,7 @@ def experiment_fixed_s_varying_n():
     print("=== experiment 1: fix s vary n ===")
     for current_n in size_list:
         # generate and copy test data
-        raw_data = generate_random_array(current_n, MAX_VALUE)
+        raw_data = generate_random_array(current_n)
         test_data = raw_data.copy()
 
         cmp_count = hybrid_merge_sort(test_data, fixed_s)
@@ -47,7 +47,7 @@ def experiment_fixed_n_varying_s():
     recorded_rows = []
 
     print("=== experiment 2：fix n=100,000，fix best S ===")
-    base_data = generate_random_array(fixed_n, MAX_VALUE)
+    base_data = generate_random_array(fixed_n)
 
     for current_s in s_candidates:
         test_data = base_data.copy()
@@ -74,7 +74,7 @@ def experiment_optimal_s():
     best_s_by_n = {}
 
     for current_n in n_values:
-        base_data = generate_random_array(current_n, MAX_VALUE)
+        base_data = generate_random_array(current_n)
 
         best_s = None
         best_cpu_time = float("inf")
@@ -115,7 +115,7 @@ def experiment_task_d_10_million(best_s):
 
     print(f"=== experiment 3: task d, n = 10000000 ===")
     print("generating data...")
-    large_dataset = generate_random_array(n_ten_million, MAX_VALUE)
+    large_dataset = generate_random_array(n_ten_million)
 
 
     print("runing original merge sort...")
