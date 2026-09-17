@@ -4,6 +4,7 @@ import time
 from data_generator import generate_random_array
 from sorting import hybrid_merge_sort, merge_sort
 
+MAX_VALUE = 10_000_000
 
 # save result to csv
 def save_data_to_csv(filename, header_list, row_data_list):
@@ -26,7 +27,7 @@ def experiment_fixed_s_varying_n():
     print("=== experiment 1: fix s vary n ===")
     for current_n in size_list:
         # generate and copy test data
-        raw_data = generate_random_array(current_n, current_n)
+        raw_data = generate_random_array(current_n, MAX_VALUE)
         test_data = raw_data.copy()
 
         cmp_count = hybrid_merge_sort(test_data, fixed_s)
@@ -46,7 +47,7 @@ def experiment_fixed_n_varying_s():
     recorded_rows = []
 
     print("=== experiment 2：fix n=100,000，fix best S ===")
-    base_data = generate_random_array(fixed_n, fixed_n)
+    base_data = generate_random_array(fixed_n, MAX_VALUE)
 
     for current_s in s_candidates:
         test_data = base_data.copy()
@@ -71,7 +72,7 @@ def experiment_task_d_10_million(best_s=32):
 
     print(f"=== experiment 3: task d, n = 10000000 ===")
     print("generating data...")
-    large_dataset = generate_random_array(n_ten_million, n_ten_million)
+    large_dataset = generate_random_array(n_ten_million, MAX_VALUE)
 
 
     print("runing original merge sort...")
