@@ -4,7 +4,6 @@ import time
 from data_generator import generate_random_array
 from sorting import hybrid_merge_sort, merge_sort
 
-MAX_VALUE = 10_000_000
 
 # save result to csv
 def save_data_to_csv(filename, header_list, row_data_list):
