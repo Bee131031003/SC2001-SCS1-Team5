@@ -63,6 +63,28 @@ def experiment_fixed_n_varying_s():
     save_data_to_csv("fixed_n_varying_s.csv", ["n", "S", "comparisons", "time_seconds"], recorded_rows)
     print("experiment 2 result saved to fixed_n_varying_s.csv\n")
 
+
+
+import statistics
+import time
+
+def measure_median_cpu_time(sort_function, test_array, s_value, repeat_count):
+    run_times = []
+
+    for _ in range(repeat_count):
+        array_copy = test_array.copy()
+
+        start_time = time.process_time()
+        sort_function(array_copy, s_value)
+        end_time = time.process_time()
+
+        single_run_time = end_time - start_time
+        run_times.append(single_run_time)
+
+    median_time = statistics.median(run_times)
+    return median_time
+
+
 def experiment_optimal_s():
     n_values = [1_000, 10_000, 100_000, 1_000_000, 10_000_000]
     s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
@@ -71,40 +93,32 @@ def experiment_optimal_s():
 
     # Stores the best S found for each n
     best_s_by_n = {}
-
+    
+    print("=== experiment: finding optimal S (with median time filtering) ===")
+    # Number of repetitions used to calculate median CPU time and reduce noise
+    repeats = 3
+    
     for current_n in n_values:
         base_data = generate_random_array(current_n)
-
         best_s = None
         best_cpu_time = float("inf")
 
         for current_s in s_candidates:
-            test_data = base_data.copy()
+            sample_copy = base_data.copy()
+            comparisons = hybrid_merge_sort(sample_copy, current_s)
 
-            start = time.process_time()
+            median_cpu_time = measure_median_cpu_time(hybrid_merge_sort, base_data, current_s, repeats)
 
-            comparisons = hybrid_merge_sort(test_data,current_s)
+            recorded_rows.append([current_n, current_s, comparisons, median_cpu_time])
 
-            end = time.process_time()
-
-            cpu_time = end - start
-
-            recorded_rows.append([current_n,current_s,comparisons,cpu_time])
-
-            # Keep track of the fastest S
-            if cpu_time < best_cpu_time:
-                best_cpu_time = cpu_time
+            if median_cpu_time < best_cpu_time:
+                best_cpu_time = median_cpu_time
                 best_s = current_s
 
         best_s_by_n[current_n] = best_s
+        print(f"n = {current_n:,} (median of {repeats} runs): best S = {best_s}, CPU time = {best_cpu_time:.6f}s")
 
-        print(
-            f"n = {current_n:,}: "
-            f"best S = {best_s}, "
-            f"CPU time = {best_cpu_time:.6f}s")
-
-    save_data_to_csv("optimal_s.csv",["n", "S", "comparisons", "cpu_time"],recorded_rows)
-
+    save_data_to_csv("optimal_s.csv", ["n", "S", "comparisons", "cpu_time"], recorded_rows)
     return best_s_by_n
 
 # experiment 3: task d, n = 10000000
