@@ -52,9 +52,9 @@ def experiment_fixed_n_varying_s():
     for current_s in s_candidates:
         test_data = base_data.copy()
 
-        start_time = time.perf_counter()
+        start_time = time.process_time()
         cmp_count = hybrid_merge_sort(test_data, current_s)
-        end_time = time.perf_counter()
+        end_time = time.process_time()
         elapsed_seconds = end_time - start_time
 
         recorded_rows.append([fixed_n, current_s, cmp_count, elapsed_seconds])
@@ -120,18 +120,18 @@ def experiment_task_d_10_million(best_s):
 
     print("runing original merge sort...")
     data_for_original = large_dataset.copy()
-    start_t1 = time.perf_counter()
+    start_t1 = time.process_time()
     cmp_original = merge_sort(data_for_original)
-    end_t1 = time.perf_counter()
+    end_t1 = time.process_time()
     time_original = end_t1 - start_t1
     recorded_rows.append(["Original Merge Sort", n_ten_million, 1, cmp_original, time_original])
 
 
     print(f"runing hybrid merge sort (S={best_s})...")
     data_for_hybrid = large_dataset.copy()
-    start_t2 = time.perf_counter()
+    start_t2 = time.process_time()
     cmp_hybrid = hybrid_merge_sort(data_for_hybrid, best_s)
-    end_t2 = time.perf_counter()
+    end_t2 = time.process_time()
     time_hybrid = end_t2 - start_t2
     recorded_rows.append([f"Hybrid Sort (S={best_s})", n_ten_million, best_s, cmp_hybrid, time_hybrid])
 
