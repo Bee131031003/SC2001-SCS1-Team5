@@ -43,7 +43,7 @@ def experiment_fixed_s_varying_n():
 # experiment 2：fix n=100,000，fix best S
 def experiment_fixed_n_varying_s():
     fixed_n = 100_000
-    s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
+    s_candidates = range(1,129)
     recorded_rows = []
 
     print("=== experiment 2：fix n=100,000，fix best S ===")
