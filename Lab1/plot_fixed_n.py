@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Read data
 df = pd.read_csv("fixed_n_varying_s.csv")
@@ -18,6 +19,18 @@ min_comparisons = df.loc[min_index, "comparisons"]
 print("Minimum comparisons:", min_comparisons)
 print("S giving minimum comparisons:", best_S)
 
+theoretical = (
+    n * np.log2(n / S)
+    + n * S
+)
+
+k = (
+    np.sum(comparisons * theoretical)
+    / np.sum(theoretical ** 2)
+)
+
+scaled_theoretical = k * theoretical
+
 # Plot
 plt.figure(figsize=(10, 6))
 
@@ -29,6 +42,12 @@ plt.plot(
     label="Actual key comparisons"
 )
 
+plt.plot(
+    S,
+    scaled_theoretical,
+    linestyle="--",
+    label="Scaled theoretical growth"
+)
 
 plt.xlabel("Threshold S")
 plt.ylabel("Number of Key Comparisons")
