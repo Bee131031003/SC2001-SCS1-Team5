@@ -39,13 +39,13 @@ def experiment_fixed_s_varying_n():
     print("experiment 1 result saved to fixed_s_varying_n.csv\n")
 
 
-# experiment 2：fix n=100,000，fix best S
+# experiment 2: fix n = 100,000, vary S
 def experiment_fixed_n_varying_s():
     fixed_n = 100_000
     s_candidates = range(1,129)
     recorded_rows = []
 
-    print("=== experiment 2：fix n=100,000，fix best S ===")
+    print("=== experiment 2: fix n = 100,000, vary S ===")
     base_data = generate_random_array(fixed_n)
 
     for current_s in s_candidates:
@@ -54,13 +54,14 @@ def experiment_fixed_n_varying_s():
         start_time = time.process_time()
         cmp_count = hybrid_merge_sort(test_data, current_s)
         end_time = time.process_time()
-        elapsed_seconds = end_time - start_time
 
-        recorded_rows.append([fixed_n, current_s, cmp_count, elapsed_seconds])
-        print(f"S = {current_s} -> cmp_count: {cmp_count}, elapsed_seconds: {elapsed_seconds:.4f} s")
+        cpu_time_seconds = end_time - start_time
+
+        recorded_rows.append([fixed_n, current_s, cmp_count, cpu_time_seconds])
+        print(f"S = {current_s} -> cmp_count: {cmp_count}, cpu_time_seconds: {cpu_time_seconds:.4f} s")
 
 
-    save_data_to_csv("fixed_n_varying_s.csv", ["n", "S", "comparisons", "time_seconds"], recorded_rows)
+    save_data_to_csv("fixed_n_varying_s.csv", ["n", "S", "comparisons", "cpu_time_seconds"], recorded_rows)
     print("experiment 2 result saved to fixed_n_varying_s.csv\n")
 
 
@@ -68,23 +69,40 @@ def experiment_fixed_n_varying_s():
 import statistics
 import time
 
-def measure_median_cpu_time(sort_function, test_array, s_value, repeat_count):
+def measure_median_cpu_time(sort_function, test_array, repeat_count, s_value=None):
     run_times = []
+    comparisons = None
 
     for _ in range(repeat_count):
+        # Each run must start from the same unsorted dataset
         array_copy = test_array.copy()
 
         start_time = time.process_time()
-        sort_function(array_copy, s_value)
+
+        if s_value is None:
+            # Original Merge Sort
+            current_comparisons = sort_function(array_copy)
+        else:
+            # Hybrid Merge Sort
+            current_comparisons = sort_function(
+                array_copy,
+                s_value
+            )
+
         end_time = time.process_time()
 
-        single_run_time = end_time - start_time
-        run_times.append(single_run_time)
+        run_times.append(end_time - start_time)
+
+        # Comparison count should be identical
+        # because every run uses the same input
+        if comparisons is None:
+            comparisons = current_comparisons
 
     median_time = statistics.median(run_times)
-    return median_time
 
+    return median_time, comparisons
 
+# experiment 3: ciii) testing for optimal S
 def experiment_optimal_s():
     n_values = [1_000, 10_000, 100_000, 1_000_000, 10_000_000]
     s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
@@ -104,10 +122,8 @@ def experiment_optimal_s():
         best_cpu_time = float("inf")
 
         for current_s in s_candidates:
-            sample_copy = base_data.copy()
-            comparisons = hybrid_merge_sort(sample_copy, current_s)
 
-            median_cpu_time = measure_median_cpu_time(hybrid_merge_sort, base_data, current_s, repeats)
+            median_cpu_time, comparisons = measure_median_cpu_time(hybrid_merge_sort, base_data, current_s, repeats)
 
             recorded_rows.append([current_n, current_s, comparisons, median_cpu_time])
 
@@ -121,9 +137,10 @@ def experiment_optimal_s():
     save_data_to_csv("optimal_s.csv", ["n", "S", "comparisons", "cpu_time"], recorded_rows)
     return best_s_by_n
 
-# experiment 3: task d, n = 10000000
+# experiment 4: task d, n = 10000000
 def experiment_task_d_10_million(best_s):
     n_ten_million = 10000000
+    repeats = 3
     recorded_rows = []
 
     print(f"=== experiment 3: task d, n = 10000000 ===")
@@ -132,29 +149,34 @@ def experiment_task_d_10_million(best_s):
 
 
     print("runing original merge sort...")
-    data_for_original = large_dataset.copy()
-    start_t1 = time.process_time()
-    cmp_original = merge_sort(data_for_original)
-    end_t1 = time.process_time()
-    time_original = end_t1 - start_t1
-    recorded_rows.append(["Original Merge Sort", n_ten_million, 1, cmp_original, time_original])
+    merge_time, cmp_original = measure_median_cpu_time(merge_sort, large_dataset, repeats)
+
+    recorded_rows.append(["Original Merge Sort", n_ten_million, "-", cmp_original, merge_time])
 
 
     print(f"runing hybrid merge sort (S={best_s})...")
-    data_for_hybrid = large_dataset.copy()
-    start_t2 = time.process_time()
-    cmp_hybrid = hybrid_merge_sort(data_for_hybrid, best_s)
-    end_t2 = time.process_time()
-    time_hybrid = end_t2 - start_t2
-    recorded_rows.append([f"Hybrid Sort (S={best_s})", n_ten_million, best_s, cmp_hybrid, time_hybrid])
+    hybrid_time, cmp_hybrid = measure_median_cpu_time( hybrid_merge_sort, large_dataset, repeats, best_s)
+
+    recorded_rows.append([f"Hybrid Sort (S={best_s})",n_ten_million, best_s, cmp_hybrid, hybrid_time])
 
 
     save_data_to_csv(
                       "task_d_10_million.csv",
-                      ["Algorithm", "n", "S", "comparisons", "cpu_time_sec"],
+                      ["Algorithm", "n", "S", "comparisons", "median_cpu_time_sec"],
                       recorded_rows,
                       )
-    print("experiment 3 result saved to task_d_10_million.csv\n")
+
+    print(
+        f"Original Merge Sort median CPU time: "
+        f"{merge_time:.4f}s"
+    )
+
+    print(
+        f"Hybrid Merge Sort median CPU time: "
+        f"{hybrid_time:.4f}s"
+    )
+    
+    print("experiment 4 result saved to task_d_10_million.csv\n")
 
 
 if __name__ == "__main__":
