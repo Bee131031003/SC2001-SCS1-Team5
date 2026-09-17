@@ -66,31 +66,50 @@ def experiment_fixed_n_varying_s():
 
 def experiment_optimal_s():
     n_values = [1_000, 10_000, 100_000, 1_000_000, 10_000_000]
-
     s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
 
     recorded_rows = []
 
+    # Stores the best S found for each n
+    best_s_by_n = {}
+
     for current_n in n_values:
         base_data = generate_random_array(current_n, MAX_VALUE)
+
+        best_s = None
+        best_cpu_time = float("inf")
 
         for current_s in s_candidates:
             test_data = base_data.copy()
 
             start = time.process_time()
 
-            comparisons = hybrid_merge_sort(test_data, current_s)
+            comparisons = hybrid_merge_sort(test_data,current_s)
 
             end = time.process_time()
 
             cpu_time = end - start
 
-            recorded_rows.append([current_n, current_s, comparisons, cpu_time])
+            recorded_rows.append([current_n,current_s,comparisons,cpu_time])
 
-    save_data_to_csv("optimal_s.csv", ["n", "S", "comparisons", "cpu_time"], recorded_rows)
+            # Keep track of the fastest S
+            if cpu_time < best_cpu_time:
+                best_cpu_time = cpu_time
+                best_s = current_s
+
+        best_s_by_n[current_n] = best_s
+
+        print(
+            f"n = {current_n:,}: "
+            f"best S = {best_s}, "
+            f"CPU time = {best_cpu_time:.6f}s")
+
+    save_data_to_csv("optimal_s.csv",["n", "S", "comparisons", "cpu_time"],recorded_rows)
+
+    return best_s_by_n
 
 # experiment 3: task d, n = 10000000
-def experiment_task_d_10_million(best_s=32):
+def experiment_task_d_10_million(best_s):
     n_ten_million = 10000000
     recorded_rows = []
 
@@ -128,4 +147,10 @@ def experiment_task_d_10_million(best_s=32):
 if __name__ == "__main__":
     experiment_fixed_s_varying_n()
     experiment_fixed_n_varying_s()
-    experiment_task_d_10_million(best_s=32)
+
+    best_s_by_n = experiment_optimal_s()
+
+    # Use the optimal S found for n = 10 million
+    best_s = best_s_by_n[10_000_000]
+
+    experiment_task_d_10_million(best_s)
