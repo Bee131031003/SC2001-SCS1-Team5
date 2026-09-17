@@ -20,7 +20,7 @@ def save_data_to_csv(filename, header_list, row_data_list):
 # ex1 fix s vary n
 def experiment_fixed_s_varying_n():
     fixed_s = 32
-    size_list = [1000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000]
+    size_list = [1000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 10000000]
     recorded_rows = []
 
     print("=== experiment 1: fix s vary n ===")
