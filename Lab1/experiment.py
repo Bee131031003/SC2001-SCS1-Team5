@@ -123,7 +123,7 @@ def experiment_optimal_s():
 
         for current_s in s_candidates:
 
-            median_cpu_time, comparisons = measure_median_cpu_time(hybrid_merge_sort, base_data, current_s, repeats)
+            median_cpu_time, comparisons = measure_median_cpu_time(hybrid_merge_sort, base_data, repeats, current_s)
 
             recorded_rows.append([current_n, current_s, comparisons, median_cpu_time])
 
