@@ -69,72 +69,207 @@ def experiment_fixed_n_varying_s():
 import statistics
 import time
 
-def measure_median_cpu_time(sort_function, test_array, repeat_count, s_value=None):
-    run_times = []
+
+def measure_median_cpu_time(
+    sort_function,
+    test_array,
+    repeat_count,
+    s_value=None,
+    batch_size=1
+):
+    average_times = []
     comparisons = None
 
     for _ in range(repeat_count):
-        # Each run must start from the same unsorted dataset
-        array_copy = test_array.copy()
+
+        # Prepare copies BEFORE timing so array copying is not measured.
+        array_copies = [
+            test_array.copy()
+            for _ in range(batch_size)
+        ]
 
         start_time = time.process_time()
 
-        if s_value is None:
-            # Original Merge Sort
-            current_comparisons = sort_function(array_copy)
-        else:
-            # Hybrid Merge Sort
-            current_comparisons = sort_function(
-                array_copy,
-                s_value
-            )
+        for array_copy in array_copies:
+
+            if s_value is None:
+                current_comparisons = sort_function(array_copy)
+            else:
+                current_comparisons = sort_function(
+                    array_copy,
+                    s_value
+                )
+
+            if comparisons is None:
+                comparisons = current_comparisons
 
         end_time = time.process_time()
 
-        run_times.append(end_time - start_time)
+        # Average CPU time for ONE sort
+        average_time = (
+            end_time - start_time
+        ) / batch_size
 
-        # Comparison count should be identical
-        # because every run uses the same input
-        if comparisons is None:
-            comparisons = current_comparisons
+        average_times.append(average_time)
 
-    median_time = statistics.median(run_times)
+    median_time = statistics.median(average_times)
 
     return median_time, comparisons
 
+
+def get_timing_parameters(n):
+
+    if n <= 1_000:
+        return 5, 100
+
+    elif n <= 10_000:
+        return 5, 30
+
+    elif n <= 100_000:
+        return 5, 5
+
+    else:
+        return 3, 1
+
+
+def test_s_candidates(current_n, base_data, s_candidates, stage):
+
+    results = []
+
+    repeat_count, batch_size = get_timing_parameters(
+        current_n
+    )
+
+    best_s = None
+    best_time = float("inf")
+
+    for current_s in s_candidates:
+
+        median_cpu_time, comparisons = (
+            measure_median_cpu_time(
+                sort_function=hybrid_merge_sort,
+                test_array=base_data,
+                repeat_count=repeat_count,
+                s_value=current_s,
+                batch_size=batch_size
+            )
+        )
+
+        results.append([
+            current_n,
+            current_s,
+            comparisons,
+            median_cpu_time,
+            stage
+        ])
+
+        if median_cpu_time < best_time:
+            best_time = median_cpu_time
+            best_s = current_s
+
+        print(
+            f"n={current_n:,}, "
+            f"S={current_s}, "
+            f"time={median_cpu_time:.6f}s"
+        )
+
+    return results, best_s, best_time
+
+
+def generate_refined_s_candidates(coarse_best_s):
+
+    lower = max(1, coarse_best_s // 2)
+    upper = min(128, coarse_best_s * 2)
+
+    # For smaller values test every integer.
+    if upper <= 32:
+        return list(range(lower, upper + 1))
+
+    # For a large range, use step 2 to keep
+    # the 10-million experiment manageable.
+    return list(range(lower, upper + 1, 2))
+
+
 # experiment 3: ciii) testing for optimal S
 def experiment_optimal_s():
-    n_values = [1_000, 10_000, 100_000, 1_000_000, 10_000_000]
-    s_candidates = [1, 2, 4, 8, 16, 32, 64, 96, 128]
+
+    n_values = [
+        1_000,
+        10_000,
+        100_000,
+        1_000_000,
+        10_000_000
+    ]
+
+    coarse_s_candidates = [1, 2, 4, 8, 16, 32, 64, 128]
 
     recorded_rows = []
-
-    # Stores the best S found for each n
     best_s_by_n = {}
-    
-    print("=== experiment: finding optimal S (with median time filtering) ===")
-    # Number of repetitions used to calculate median CPU time and reduce noise
-    repeats = 3
-    
+
+    print("=== experiment3: finding optimal S ===")
+
     for current_n in n_values:
+
+        print(f"\n--- Testing n = {current_n:,} ---")
+
+        # Same dataset used for all S values
+        # for this n.
         base_data = generate_random_array(current_n)
-        best_s = None
-        best_cpu_time = float("inf")
 
-        for current_s in s_candidates:
+        # Stage 1: coarse search
 
-            median_cpu_time, comparisons = measure_median_cpu_time(hybrid_merge_sort, base_data, repeats, current_s)
+        coarse_results, coarse_best_s, _ = (
+            test_s_candidates(current_n=current_n, base_data=base_data, s_candidates=coarse_s_candidates, stage="coarse")
+        )
 
-            recorded_rows.append([current_n, current_s, comparisons, median_cpu_time])
+        recorded_rows.extend(coarse_results)
 
-            if median_cpu_time < best_cpu_time:
-                best_cpu_time = median_cpu_time
-                best_s = current_s
+        print(f"Coarse best S = {coarse_best_s}")
+
+        # Stage 2: refinement
+
+        # reduce the generating time lol
+        if current_n == 10_000_000:
+            refined_candidates = list(
+                range(
+                max(1,coarse_best_s - 8), 
+                min(128, coarse_best_s + 8)+1,
+                2
+                )
+            )
+        else:
+            refined_candidates = (generate_refined_s_candidates(coarse_best_s))
+
+        # Don't re-run values already tested
+        # during coarse search.
+        refined_candidates = [s for s in refined_candidates if s not in coarse_s_candidates]
+
+        refined_results, refined_best_s, refined_best_time = (
+            test_s_candidates(current_n=current_n, base_data=base_data, s_candidates=refined_candidates, stage="refined")
+        )
+
+        recorded_rows.extend(refined_results)
+
+        # Find overall best S
+
+        all_results_for_n = (coarse_results + refined_results)
+
+        best_row = min(all_results_for_n, key=lambda row: row[3])
+
+        best_s = best_row[1]
+        best_cpu_time = best_row[3]
 
         best_s_by_n[current_n] = best_s
-        print(f"n = {current_n:,} (median of {repeats} runs): best S = {best_s}, CPU time = {best_cpu_time:.6f}s")
 
-    save_data_to_csv("optimal_s.csv", ["n", "S", "comparisons", "cpu_time"], recorded_rows)
+        print(
+            f"FINAL for n={current_n:,}: "
+            f"best S={best_s}, "
+            f"median CPU time="
+            f"{best_cpu_time:.6f}s"
+        )
+
+    save_data_to_csv("optimal_s.csv", ["n", "S", "comparisons", "median_cpu_time_sec", "stage"], recorded_rows)
+
     return best_s_by_n
 
 # experiment 4: task d, n = 10000000
