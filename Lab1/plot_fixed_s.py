@@ -10,11 +10,12 @@ n = df["n"]
 S = df["S"]
 actual = df["comparisons"]
 
-# Theoretical complexity:
+# Asymptotic growth model:
 # T(n, S) = n log2(n/S) + nS
 theoretical = n * np.log2(n / S) + n * S
 
-# Find a scaling constant k using least squares
+# Find a scaling constant k using least squares so the asymptotic model
+# can be displayed on the same vertical scale as the empirical counts.
 k = np.sum(actual * theoretical) / np.sum(theoretical ** 2)
 
 scaled_theoretical = k * theoretical
@@ -39,12 +40,12 @@ plt.plot(
     scaled_theoretical,
     marker="s",
     linestyle="--",
-    label=r"Scaled theoretical $k[n\log_2(n/S)+nS]$"
+    label=r"Scaled Asymptotic Model $k[n\log_2(n/S)+nS]$"
 )
 
 plt.xlabel("Input size n")
 plt.ylabel("Number of key comparisons")
-plt.title("Actual vs Theoretical Key Comparisons")
+plt.title("Empirical Key Comparisons vs Scaled Asymptotic Model")
 plt.legend()
 plt.grid(True)
 

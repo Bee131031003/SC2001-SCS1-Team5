@@ -39,7 +39,7 @@ plt.plot(
     comparisons,
     marker = 'o',
     linewidth=1.8,
-    label="Actual key comparisons"
+    label="Empirical Key Comparisons"
 )
 
 plt.plot(
