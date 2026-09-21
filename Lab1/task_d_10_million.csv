@@ -1,3 +1,3 @@
 Algorithm,n,S,comparisons,median_cpu_time_sec
-Original Merge Sort,10000000,-,220103519,42.75
-Hybrid Sort (S=8),10000000,8,221114336,39.96875
+Original Merge Sort,10000000,-,220100938,75.89163399999961
+Hybrid Sort (S=8),10000000,8,221111592,70.06393500000013
