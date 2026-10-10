@@ -1,4 +1,3 @@
-
 import heapq
 
 INFINITY = float("inf")
