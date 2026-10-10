@@ -9,7 +9,6 @@ df = pd.read_csv("fixed_s_varying_n.csv")
 n = df["n"]
 S = df["S"]
 actual = df["comparisons"]
-
 # Asymptotic growth model:
 # T(n, S) = n log2(n/S) + nS
 theoretical = n * np.log2(n / S) + n * S
