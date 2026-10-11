@@ -10,7 +10,7 @@ def matrix_to_adj_list(graph_matrix):
     Adjacency list format:
         adj_list[u] = [(v, weight), ...]
 
-    An edge exists if its weight is positive and finite.
+    An edge exists if its weight is nonnegative and finite.
     """
 
     num_vertices = len(graph_matrix)
@@ -23,8 +23,10 @@ def matrix_to_adj_list(graph_matrix):
 
             weight = graph_matrix[u][v]
 
-            # Follow the same edge convention as Part (a)
-            if weight > 0 and weight != INFINITY:
+            if weight < 0:
+                raise ValueError("Dijkstra does not allow negative edge weights")
+            # Diagonal zeros represent distance to self, not edges.
+            if u != v and weight != INFINITY:
                 adj_list[u].append((v, weight))
 
     return adj_list
@@ -45,6 +47,9 @@ def dijkstra_list_heap(graph, source):
     """
 
     num_vertices = len(graph)
+
+    if any(weight < 0 for neighbours in graph for _, weight in neighbours):
+        raise ValueError("Dijkstra does not allow negative edge weights")
 
     # Step 1: Initialize distances
     dist = [INFINITY] * num_vertices

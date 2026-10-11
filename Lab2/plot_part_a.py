@@ -1,90 +1,48 @@
-# plot by ai
+"""Plot the three paired Part (a) benchmark scenarios."""
 
 import csv
+
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
+
+
+def read_results(filename):
+    with open(filename, newline="") as file:
+        return list(csv.DictReader(file))
+
+
+def plot_scenario(filename, output, x_column, title):
+    rows = read_results(filename)
+    x = [float(row[x_column]) for row in rows]
+    measured = [float(row["cpu_time_sec"]) for row in rows]
+    theoretical = [float(row["V_squared"]) for row in rows]
+    # Match Part (b)'s least-squares scaling for visual shape comparison.
+    scale = sum(t * y for t, y in zip(theoretical, measured)) / sum(
+        t * t for t in theoretical
+    )
+    fig, ax = plt.subplots(figsize=(9, 6))
+    ax.plot(x, measured, "o-", label="Measured CPU time")
+    ax.plot(x, [scale * t for t in theoretical], "s--",
+            label="Scaled V² reference")
+    ax.set(xlabel="Vertices (V)" if x_column == "V" else "Actual edges (E)",
+           ylabel="CPU seconds per execution", title=title)
+    ax.legend()
+    ax.grid(alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(output, dpi=300)
+    plt.close(fig)
 
 
 def plot_results():
-  v_list, cpu_time_v = [], []
-  with open("part_a_varying_v.csv", "r") as f:
-    reader = csv.reader(f)
-    next(reader)
-    for row in reader:
-      v_list.append(int(row[0]))
-      cpu_time_v.append(float(row[2]))
-
-  densities, cpu_time_density = [], []
-  with open("part_a_varying_density.csv", "r") as f:
-    reader = csv.reader(f)
-    next(reader)
-    for row in reader:
-      densities.append(float(row[1]))
-      cpu_time_density.append(float(row[2]))
-
-  fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))
-
-  ax1.plot(
-      v_list,
-      cpu_time_v,
-      "o-",
-      color="#1f77b4",
-      linewidth=2,
-      label="Empirical CPU Time (Measured)",
-  )
-  v_fit = np.linspace(min(v_list), max(v_list), 100)
-  c = cpu_time_v[-1] / (v_list[-1] ** 2)
-  ax1.plot(
-      v_fit,
-      c * (v_fit**2),
-      "--",
-      color="#d62728",
-      linewidth=2,
-      label=r"Theoretical Fit $\Theta(|V|^2)$",
-  )
-  ax1.set_xlabel("Number of Vertices |V|", fontsize=11, fontweight="bold")
-  ax1.set_ylabel("CPU Time (seconds)", fontsize=11, fontweight="bold")
-  ax1.set_title(
-      "Part (a): Runtime vs |V|\n(Fixed Density = 0.2)",
-      fontsize=12,
-      fontweight="bold",
-  )
-  ax1.legend()
-  ax1.grid(True, linestyle="--", alpha=0.6)
-
-  ax2.plot(
-      densities,
-      cpu_time_density,
-      "s-",
-      color="#2ca02c",
-      linewidth=2,
-      label="Empirical CPU Time (|V|=800)",
-  )
-  mean_t = sum(cpu_time_density) / len(cpu_time_density)
-  ax2.axhline(
-      mean_t,
-      color="gray",
-      linestyle=":",
-      linewidth=1.5,
-      label=f"Mean Time ({mean_t:.3f}s)",
-  )
-  ax2.set_xlabel(
-      "Edge Density (Proportional to |E|)", fontsize=11, fontweight="bold"
-  )
-  ax2.set_ylabel("CPU Time (seconds)", fontsize=11, fontweight="bold")
-  ax2.set_title(
-      "Part (a): Runtime vs Density\n(Fixed |V| = 800)",
-      fontsize=12,
-      fontweight="bold",
-  )
-  ax2.set_ylim(0, max(cpu_time_density) * 2)
-  ax2.legend()
-  ax2.grid(True, linestyle="--", alpha=0.6)
-
-  plt.tight_layout()
-  plt.savefig("part_a_empirical_results.png", dpi=300)
-  plt.show()
+    plot_scenario("part_a_varying_v.csv", "part_a_varying_v.png", "V",
+                  "Part (a): fixed density = 0.2")
+    plot_scenario("part_a_varying_density.csv", "part_a_varying_e.png", "E",
+                  "Part (a): fixed V = 800; varying density")
+    plot_scenario("part_a_sparse_v.csv", "part_a_sparse_v.png", "V",
+                  "Part (a): sparse scaling, E = 10V")
 
 
 if __name__ == "__main__":
-  plot_results()
+    plot_results()

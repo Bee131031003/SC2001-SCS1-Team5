@@ -11,6 +11,9 @@ def dijkstra_matrix_array(graph_matrix, source):
     # |V|
     num_vertices = len(graph_matrix)
 
+    if any(weight < 0 for row in graph_matrix for weight in row):
+        raise ValueError("Dijkstra does not allow negative edge weights")
+
     # 1. dist btw SN and SN = 0，set SN to all other node = inf
     dist = []
     for i in range(num_vertices):
@@ -24,7 +27,7 @@ def dijkstra_matrix_array(graph_matrix, source):
 
     # 3. check for shortest dist btw every node,loop |V| time
     for count in range(num_vertices):
-        
+
         min_distance = INFINITY
         u = -1
 
@@ -40,11 +43,11 @@ def dijkstra_matrix_array(graph_matrix, source):
         # shortest dist for node u is cfmed
         visited[u] = True
 
-        # relaxation 
+        # relaxation
         for v in range(num_vertices):
             weight = graph_matrix[u][v]
             #condition for relaxation
-            if not visited[v] and weight > 0 and weight != INFINITY:
+            if v != u and not visited[v] and weight != INFINITY:
                 new_dist = dist[u] + weight
                 if new_dist < dist[v]:
                     dist[v] = new_dist

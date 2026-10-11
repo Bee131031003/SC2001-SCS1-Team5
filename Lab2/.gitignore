@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.pdf
+*.md
+.pytest_cache/
+test_benchmark_outputs.py
+test_benchmark.py

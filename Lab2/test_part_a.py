@@ -1,42 +1,88 @@
+import math
+import random
 
-from dijkstra_matrix import INFINITY, dijkstra_matrix_array
+import pytest
 
-
-def test_simple_graph():
-    # 0 --(10)--> 1 --(1)--> 2
-    # 0 --------(3)--------> 2
-    # 1 --(2)--> 3
-    # 2 --(8)--> 3 --(7)--> 4
-    # 2 --(2)--> 4
-    num_nodes = 5
-    matrix = []
-
-    # 5*5 matrix
-    for i in range(num_nodes):
-        row = []
-        for j in range(num_nodes):
-            if i == j:
-                row.append(0)  # dist btw self
-            else:
-                row.append(INFINITY)
-        matrix.append(row)
-
-    # weight
-    matrix[0][1] = 10
-    matrix[0][2] = 3
-    matrix[1][2] = 1
-    matrix[1][3] = 2
-    matrix[2][3] = 8
-    matrix[2][4] = 2
-    matrix[3][4] = 7
+from dijkstra_heap import dijkstra_list_heap, matrix_to_adj_list
+from dijkstra_matrix import dijkstra_matrix_array
+from graph_generator import generate_random_matrix, generate_sparse_matrix
 
 
-    distances = dijkstra_matrix_array(matrix, 0)
+@pytest.mark.parametrize(
+    ("matrix", "source", "expected"),
+    [
+        (
+            [
+                [0, 10, 3, math.inf, math.inf],
+                [math.inf, 0, 1, 2, math.inf],
+                [math.inf, math.inf, 0, 8, 2],
+                [math.inf, math.inf, math.inf, 0, 7],
+                [math.inf, math.inf, math.inf, math.inf, 0],
+            ],
+            0,
+            [0, 10, 3, 11, 5],
+        ),
+        (
+            [[0, 0, 9], [math.inf, 0, 2], [math.inf, math.inf, 0]],
+            0,
+            [0, 0, 2],
+        ),
+        (
+            [[0, 5, math.inf], [math.inf, 0, math.inf], [math.inf, math.inf, 0]],
+            0,
+            [0, 5, math.inf],
+        ),
+        ([[0]], 0, [0]),
+    ],
+)
+def test_known_shortest_paths_match_both_representations(matrix, source, expected):
+    assert dijkstra_matrix_array(matrix, source) == expected
+    assert dijkstra_list_heap(matrix_to_adj_list(matrix), source) == expected
 
-    print("Shortest distance from source node 0：")
-    for node_id in range(num_nodes):
-        print(f"Shortest dist to node {node_id} : {distances[node_id]}")
+
+def test_zero_weight_edge_is_preserved_by_conversion():
+    matrix = [[0, 0, math.inf], [math.inf, 0, 2], [math.inf, math.inf, 0]]
+    assert matrix_to_adj_list(matrix) == [[(1, 0)], [(2, 2)], []]
 
 
-if __name__ == "__main__":
-    test_simple_graph()
+def test_negative_weight_edges_are_rejected():
+    matrix = [[0, -1], [math.inf, 0]]
+    with pytest.raises(ValueError, match="negative"):
+        dijkstra_matrix_array(matrix, 0)
+    with pytest.raises(ValueError, match="negative"):
+        matrix_to_adj_list(matrix)
+    with pytest.raises(ValueError, match="negative"):
+        dijkstra_list_heap([[(1, -1)], []], 0)
+
+
+def test_random_graphs_match_on_identical_matrices():
+    rng = random.Random(2026)
+    for vertices in (10, 50, 100):
+        for density in (0.1, 0.5, 1.0):
+            matrix = generate_random_matrix(vertices, density, rng=rng)
+            assert dijkstra_matrix_array(matrix, 0) == dijkstra_list_heap(
+                matrix_to_adj_list(matrix), 0
+            )
+
+
+def test_sparse_generator_has_ten_outgoing_edges_per_vertex():
+    for vertices in (100, 200):
+        matrix = generate_sparse_matrix(vertices, average_degree=10, rng=random.Random(42))
+        assert len(matrix) == vertices
+        assert all(row[u] == 0 for u, row in enumerate(matrix))
+        assert all(sum(weight != math.inf for v, weight in enumerate(row) if v != u) == 10
+                   for u, row in enumerate(matrix))
+        assert all(weight >= 0 for row in matrix for weight in row)
+
+
+def test_seeded_generation_is_reproducible():
+    assert generate_random_matrix(20, 0.2, rng=random.Random(42)) == \
+        generate_random_matrix(20, 0.2, rng=random.Random(42))
+
+
+def test_generator_can_create_zero_weight_edges_when_requested():
+    matrix = generate_random_matrix(3, density=1, max_weight=0,
+                                    min_weight=0, rng=random.Random(42))
+    assert matrix_to_adj_list(matrix) == [
+        [(1, 0), (2, 0)], [(0, 0), (2, 0)], [(0, 0), (1, 0)]
+    ]
