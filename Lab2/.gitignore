@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.pdf
 *.md
+!part_c_analysis.md
 .pytest_cache/
 test_benchmark_outputs.py
 test_benchmark.py
