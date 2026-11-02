@@ -1,0 +1,98 @@
+Self-test: 300 random instances + edge cases all match brute force -> PASS
+
+==============================================================================
+Question 4(a):  compute P(16)
+==============================================================================
+    i     0    1    2
+  w_i     4    5    8
+  p_i     7    6    9
+
+Step-by-step bottom-up table (P(c) = profit[c]):
+  c |     i=0 (w=4)      |     i=1 (w=5)      |     i=2 (w=8)      | P(c) | last item
+-------------------------------------------------------------------------------------
+  0 |     base case      |                    |                    |    0 | -
+  1 |         -          |         -          |         -          |    0 | -
+  2 |         -          |         -          |         -          |    0 | -
+  3 |         -          |         -          |         -          |    0 | -
+  4 |     7+P(0)=7*      |         -          |         -          |    7 | object 0
+  5 |     7+P(1)=7*      |     6+P(0)=6       |         -          |    7 | object 0
+  6 |     7+P(2)=7*      |     6+P(1)=6       |         -          |    7 | object 0
+  7 |     7+P(3)=7*      |     6+P(2)=6       |         -          |    7 | object 0
+  8 |     7+P(4)=14*     |     6+P(3)=6       |     9+P(0)=9       |   14 | object 0
+  9 |     7+P(5)=14*     |     6+P(4)=13      |     9+P(1)=9       |   14 | object 0
+ 10 |     7+P(6)=14*     |     6+P(5)=13      |     9+P(2)=9       |   14 | object 0
+ 11 |     7+P(7)=14*     |     6+P(6)=13      |     9+P(3)=9       |   14 | object 0
+ 12 |     7+P(8)=21*     |     6+P(7)=13      |     9+P(4)=16      |   21 | object 0
+ 13 |     7+P(9)=21*     |     6+P(8)=20      |     9+P(5)=16      |   21 | object 0
+ 14 |    7+P(10)=21*     |     6+P(9)=20      |     9+P(6)=16      |   21 | object 0
+ 15 |    7+P(11)=21*     |    6+P(10)=20      |     9+P(7)=16      |   21 | object 0
+ 16 |    7+P(12)=28*     |    6+P(11)=20      |     9+P(8)=23      |   28 | object 0
+  ('-' = object does not fit;  '*' = candidate chosen as the max)
+
+Final 1-D DP array profit[0..C]:
+   c   :   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16
+  P(c) :   0   0   0   0   7   7   7   7  14  14  14  14  21  21  21  21  28
+
+Optimal selection (traceback through choice[]):
+  4 x object 0  (w=4, p=7)  -> weight 16, profit 28
+  total weight = 16 <= 16,  total profit = 28,  unused capacity = 0
+  (this optimal selection is unique)
+
+Verification: bottom-up = 28, top-down memo = 28, brute force = 28  -> PASS
+
+>>> Maximum profit P(16) = 28
+
+==============================================================================
+Question 4(b):  compute P(12)
+==============================================================================
+    i     0    1    2
+  w_i     5    6    7
+  p_i     7    6    9
+
+Step-by-step bottom-up table (P(c) = profit[c]):
+  c |     i=0 (w=5)      |     i=1 (w=6)      |     i=2 (w=7)      | P(c) | last item
+-------------------------------------------------------------------------------------
+  0 |     base case      |                    |                    |    0 | -
+  1 |         -          |         -          |         -          |    0 | -
+  2 |         -          |         -          |         -          |    0 | -
+  3 |         -          |         -          |         -          |    0 | -
+  4 |         -          |         -          |         -          |    0 | -
+  5 |     7+P(0)=7*      |         -          |         -          |    7 | object 0
+  6 |     7+P(1)=7*      |     6+P(0)=6       |         -          |    7 | object 0
+  7 |     7+P(2)=7       |     6+P(1)=6       |     9+P(0)=9*      |    9 | object 2
+  8 |     7+P(3)=7       |     6+P(2)=6       |     9+P(1)=9*      |    9 | object 2
+  9 |     7+P(4)=7       |     6+P(3)=6       |     9+P(2)=9*      |    9 | object 2
+ 10 |     7+P(5)=14*     |     6+P(4)=6       |     9+P(3)=9       |   14 | object 0
+ 11 |     7+P(6)=14*     |     6+P(5)=13      |     9+P(4)=9       |   14 | object 0
+ 12 |     7+P(7)=16*     |     6+P(6)=13      |     9+P(5)=16      |   16 | object 0
+  ('-' = object does not fit;  '*' = candidate chosen as the max)
+
+Final 1-D DP array profit[0..C]:
+   c   :   0   1   2   3   4   5   6   7   8   9  10  11  12
+  P(c) :   0   0   0   0   0   7   7   9   9   9  14  14  16
+
+Optimal selection (traceback through choice[]):
+  1 x object 0  (w=5, p=7)  -> weight 5, profit 7
+  1 x object 2  (w=7, p=9)  -> weight 7, profit 9
+  total weight = 12 <= 12,  total profit = 16,  unused capacity = 0
+  (this optimal selection is unique)
+
+Verification: bottom-up = 16, top-down memo = 16, brute force = 16  -> PASS
+
+>>> Maximum profit P(12) = 16
+
+Running-time experiment (best of 3 runs)
+  Fix n = 10, vary C:
+         C   time (ms)       ns per cell
+     10000        8.96             89.59
+     20000       19.01             95.06
+     40000       38.51             96.27
+     80000       73.24             91.56
+  Fix C = 20000, vary n:
+         n   time (ms)       ns per cell
+         5       11.99            119.88
+        10       19.12             95.62
+        20       33.79             84.47
+        40       63.47             79.34
+  Roughly constant ns per cell -> running time grows as n*C.
+
